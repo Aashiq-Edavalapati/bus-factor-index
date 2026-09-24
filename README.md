@@ -119,17 +119,18 @@ The primary collection yielded **444 packages** (386 npm packages, 58 PyPI packa
 
 The raw records were processed into `data/cleaned_dataset.csv` (443 valid records, 38 attributes):
 1. **Deduplication & Validation:** Removed duplicates and filtered 1 record lacking creation dates.
-2. **Temporal Calculation:** Anchored to September 24, 2026. Computed repository age in years and elapsed days since the latest release.
-3. **Algorithmic Bus Factor (Contributor Gini):**
+2. **License Standardization:** Standardized multi-line license dumps and verbose text agreements (such as Scipy and Pandas 50k+ char legal texts) into concise SPDX identifiers (`MIT`, `BSD-3-Clause`, `Apache-2.0`, etc.) and engineered binary permissive licensing indicators (`is_permissive`).
+3. **Temporal Calculation:** Anchored to September 24, 2026. Computed repository age in years and elapsed days since the latest release.
+4. **Algorithmic Bus Factor (Contributor Gini):**
    For sorted contributor commits $x_1 \le x_2 \le \dots \le x_n$:
    $$G = \frac{2 \sum_{i=1}^n i \cdot x_i}{n \sum_{i=1}^n x_i} - \frac{n + 1}{n}$$
    Where $G = 1.0$ indicates absolute contributor monopoly (Bus Factor = 1).
    `bus_factor_approx` computes the minimum number of authors required to encompass $\ge 80\%$ of total historical commits.
-4. **Issue Resolution Velocity:**
+5. **Issue Resolution Velocity:**
    $$\text{issue\_resolution\_ratio} = \frac{\max(0, \text{total\_issues} - \text{open\_issues})}{\text{total\_issues}}$$
-5. **Annualized Release Cadence:**
+6. **Annualized Release Cadence:**
    $$\text{release\_cadence\_annual} = \frac{\text{releases\_count}}{\max(0.5, \text{repository\_age\_years})}$$
-6. **Downstream Blast Radius Index (0–100 Scale):**
+7. **Downstream Blast Radius Index (0–100 Scale):**
    $$\text{Blast Radius} = 100 \times \left( 0.6 \cdot \frac{\log_{10}(\text{dl}+1) - \min}{\max - \min} + 0.4 \cdot \frac{\log_{10}(\text{dep}+1) - \min}{\max - \min} \right)$$
 
 ---

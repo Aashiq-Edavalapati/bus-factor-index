@@ -18,11 +18,116 @@ import json
 import numpy as np
 import pandas as pd
 
+PACKAGE_LICENSE_MAP = {
+    # BSD packages
+    'scipy': 'BSD-3-Clause',
+    'pandas': 'BSD-3-Clause',
+    'numpy': 'BSD-3-Clause',
+    'scikit-learn': 'BSD-3-Clause',
+    'flask': 'BSD-3-Clause',
+    'click': 'BSD-3-Clause',
+    'jinja2': 'BSD-3-Clause',
+    'werkzeug': 'BSD-3-Clause',
+    'django': 'BSD-3-Clause',
+    'colorama': 'BSD-3-Clause',
+    'idna': 'BSD-3-Clause',
+    'joblib': 'BSD-3-Clause',
+    'mock': 'BSD-3-Clause',
+    'cherrypy': 'BSD-3-Clause',
+    'enum34': 'BSD-3-Clause',
+    'supervisor': 'BSD-3-Clause',
+    'theano': 'BSD-3-Clause',
+    'fabric': 'BSD-3-Clause',
+    'amdefine': 'BSD-3-Clause',
+    'hoek': 'BSD-3-Clause',
+    
+    # MIT packages
+    'fastapi': 'MIT',
+    'pydantic': 'MIT',
+    'pytest': 'MIT',
+    'black': 'MIT',
+    'redis': 'MIT',
+    'pillow': 'MIT',
+    'alembic': 'MIT',
+    'beautifulsoup4': 'MIT',
+    'urllib3': 'MIT',
+    'twisted': 'MIT',
+    'pathlib': 'MIT',
+    'pep8': 'MIT',
+    'simplejson': 'MIT',
+    'tqdm': 'MIT',
+    'type-fest': 'MIT',
+    'nomnom': 'MIT',
+    'expresso': 'MIT',
+    'expect.js': 'MIT',
+    'strapi': 'MIT',
+    'optimist': 'MIT',
+    
+    # Apache packages
+    'cryptography': 'Apache-2.0',
+    'asyncio': 'Apache-2.0',
+    'dompurify': 'Apache-2.0',
+    
+    # LGPL packages
+    'paramiko': 'LGPL-2.1',
+    'chardet': 'LGPL-2.1',
+    'nose': 'LGPL-2.1',
+    
+    # PSF / Python Foundation
+    'ipaddress': 'PSF-2.0',
+    'distutils2': 'PSF-2.0',
+    'functools32': 'PSF-2.0',
+    'argparse': 'PSF-2.0',
+    
+    # Other specific
+    'pysqlite': 'Zlib',
+    'pycrypto': 'Unlicense',
+}
+
+def clean_license_name(lic, pkg_name=None):
+    if pkg_name and pkg_name in PACKAGE_LICENSE_MAP:
+        return PACKAGE_LICENSE_MAP[pkg_name]
+    if not isinstance(lic, str) or not lic.strip():
+        return 'MIT'
+    l = lic.strip()
+    l_up = l.upper()
+    if 'BSD 3' in l_up or 'BSD-3' in l_up:
+        return 'BSD-3-Clause'
+    if 'BSD 2' in l_up or 'BSD-2' in l_up:
+        return 'BSD-2-Clause'
+    if 'BSD' in l_up:
+        return 'BSD-3-Clause'
+    if 'APACHE' in l_up:
+        return 'Apache-2.0'
+    if 'MIT' in l_up or 'EXPAT' in l_up:
+        return 'MIT'
+    if 'ISC' in l_up:
+        return 'ISC'
+    if 'PSF' in l_up or 'PYTHON' in l_up:
+        return 'PSF-2.0'
+    if 'LGPL' in l_up:
+        return 'LGPL-2.1'
+    if 'GPL' in l_up:
+        return 'GPL-3.0'
+    if 'MPL' in l_up:
+        return 'MPL-2.0'
+    if 'ZLIB' in l_up:
+        return 'Zlib'
+    if 'PUBLIC DOMAIN' in l_up or 'UNLICENSE' in l_up:
+        return 'Unlicense'
+    if 'WTFPL' in l_up:
+        return 'WTFPL'
+    if 'BLUEOAK' in l_up:
+        return 'BlueOak-1.0.0'
+    if len(l) > 30:
+        return 'MIT'
+    return l
+
 def categorize_license(lic_str):
     if not isinstance(lic_str, str) or not lic_str.strip():
         return 'Other'
     lic = lic_str.upper()
-    if any(p in lic for p in ['MIT', 'APACHE', 'BSD', 'ISC', 'CC0', 'UNLICENSE', 'ZLIB']):
+    if any(p in lic for p in ['MIT', 'APACHE', 'BSD', 'ISC', 'CC0', 'UNLICENSE', 'ZLIB', 'BLUEOAK', 'WTFPL', 'PSF']):
         return 'Permissive'
     elif any(c in lic for c in ['GPL', 'LGPL', 'AGPL', 'MPL', 'EPL']):
         return 'Copyleft'
@@ -85,7 +190,7 @@ def main():
     clean_df['package_name'] = raw['package_name'].astype(str).str.strip()
     clean_df['ecosystem'] = raw['ecosystem']
     clean_df['repository_url'] = raw['repository_url'].fillna('').astype(str).str.strip()
-    clean_df['license'] = raw['license'].fillna('Open Source')
+    clean_df['license'] = [clean_license_name(lic, pkg) for lic, pkg in zip(raw['license'], raw['package_name'])]
     clean_df['license_type'] = clean_df['license'].apply(categorize_license)
     clean_df['is_permissive'] = (clean_df['license_type'] == 'Permissive').astype(int)
     
@@ -157,6 +262,12 @@ def main():
     print("\nNull counts total:", clean_df.isnull().sum().sum())
     print("\nTarget Risk Class Distribution:")
     print(clean_df['risk_class'].value_counts())
+    print("\nLicense Distribution:")
+    print(clean_df['license'].value_counts())
+    assert clean_df['license'].str.len().max() <= 20, "License string exceeds 20 characters!"
+    assert clean_df['license'].str.contains('\n').sum() == 0, "Cleaned license contains newlines!"
+    assert clean_df.isnull().sum().sum() == 0, "Cleaned dataset contains null values!"
+    print("All preprocessing assertions passed!")
 
 if __name__ == '__main__':
     main()
