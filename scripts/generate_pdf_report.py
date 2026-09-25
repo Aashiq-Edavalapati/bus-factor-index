@@ -1,32 +1,29 @@
 """
-Generate Professional Academic Case Study Report PDF (Exactly 10 pages)
+Generate Professional Academic Case Study Report PDF (8-Page Optimized Publication Layout)
 Follows Business Analytics Individual Case Study Submission Format.
 Outputs: Case_Study_Report.pdf
 """
 
 import os
-import pandas as pd
-import numpy as np
-
+import sys
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image, PageBreak, HRFlowable
+    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image, PageBreak, HRFlowable, KeepTogether
 )
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.pdfgen import canvas
 
-# Palette Constants
-NAVY = colors.HexColor("#1A365D")
-SLATE = colors.HexColor("#2B6CB0")
-CHARCOAL = colors.HexColor("#2D3748")
-LIGHT_BG = colors.HexColor("#F7FAFC")
-BORDER_COLOR = colors.HexColor("#CBD5E0")
-CRIMSON = colors.HexColor("#9B2C2C")
-AMBER = colors.HexColor("#DD6B20")
-GREEN = colors.HexColor("#2F855A")
-WHITE = colors.HexColor("#FFFFFF")
-ROW_ALT = colors.HexColor("#EDF2F7")
+# Palette definition
+PRIMARY = colors.HexColor("#0f172a")      # Slate 900
+NAVY = colors.HexColor("#1e3a8a")         # Blue 900
+SLATE = colors.HexColor("#334155")        # Slate 700
+CHARCOAL = colors.HexColor("#1e293b")     # Slate 800
+LIGHT_BG = colors.HexColor("#f8fafc")     # Slate 50
+ROW_ALT = colors.HexColor("#f1f5f9")      # Slate 100
+BORDER_COLOR = colors.HexColor("#cbd5e1") # Slate 300
+ACCENT_BLUE = colors.HexColor("#2563eb")  # Blue 600
+WHITE = colors.white
 
 class NumberedCanvas(canvas.Canvas):
     def __init__(self, *args, **kwargs):
@@ -47,107 +44,103 @@ class NumberedCanvas(canvas.Canvas):
 
     def draw_page_decorations(self, page_count):
         self.saveState()
-        # Suppress running header on cover / page 1
-        if self._pageNumber > 1:
-            self.setFont("Helvetica-Bold", 8)
-            self.setFillColor(NAVY)
-            self.drawString(54, 750, "THE BUS-FACTOR INDEX: PREDICTING OPEN-SOURCE PACKAGE ABANDONMENT")
-            self.setFont("Helvetica", 8)
-            self.setFillColor(CHARCOAL)
-            self.drawRightString(612 - 54, 750, "Aashiq Edavalapati | CB.SC.U4CSE23560")
-            self.setStrokeColor(BORDER_COLOR)
-            self.setLineWidth(0.75)
-            self.line(54, 744, 612 - 54, 744)
-
-        # Running footer on all pages
-        self.setStrokeColor(BORDER_COLOR)
-        self.setLineWidth(0.75)
-        self.line(54, 45, 612 - 54, 45)
         self.setFont("Helvetica", 8)
         self.setFillColor(CHARCOAL)
-        self.drawString(54, 32, "Business Analytics Individual Case Study (Sem 7) — Department of Computer Science & Engineering")
-        page_str = f"Page {self._pageNumber} of {page_count}"
-        self.drawRightString(612 - 54, 32, page_str)
+        
+        # Running header on pages 2+
+        if self._pageNumber > 1:
+            self.drawString(36, 762, "THE BUS-FACTOR INDEX: PREDICTING OPEN-SOURCE PACKAGE ABANDONMENT")
+            self.drawRightString(576, 762, "Aashiq Edavalapati | CB.SC.U4CSE23560")
+            self.setStrokeColor(BORDER_COLOR)
+            self.setLineWidth(0.5)
+            self.line(36, 756, 576, 756)
+            
+        # Running footer on all pages
+        self.setStrokeColor(BORDER_COLOR)
+        self.setLineWidth(0.5)
+        self.line(36, 42, 576, 42)
+        self.drawString(36, 30, "Business Analytics Individual Case Study (Sem 7) — Department of Computer Science & Engineering")
+        self.drawRightString(576, 30, f"Page {self._pageNumber} of {page_count}")
         self.restoreState()
 
-def create_report():
-    pdf_filename = "Case_Study_Report.pdf"
+def create_report(pdf_filename="Case_Study_Report.pdf"):
     doc = SimpleDocTemplate(
         pdf_filename,
         pagesize=letter,
-        leftMargin=54,
-        rightMargin=54,
-        topMargin=54,
-        bottomMargin=54
+        leftMargin=36,
+        rightMargin=36,
+        topMargin=38,
+        bottomMargin=44
     )
 
     styles = getSampleStyleSheet()
 
-    # Custom Typography Styles matching Course Submission Template & Reference Image
+    # Academic Centered Header Styles (Matching Reference Format)
     course_header_style = ParagraphStyle(
         'CourseHeader',
         parent=styles['Normal'],
         fontName='Helvetica-Bold',
-        fontSize=10.5,
-        leading=13.5,
-        textColor=CHARCOAL,
+        fontSize=10,
+        leading=13,
         alignment=1,
-        spaceAfter=4
+        textColor=NAVY,
+        spaceAfter=3
     )
 
     main_title_style = ParagraphStyle(
-        'MainTitle_Format',
+        'MainTitle',
         parent=styles['Normal'],
         fontName='Helvetica-Bold',
-        fontSize=14.5,
-        leading=18,
-        textColor=CHARCOAL,
+        fontSize=13.5,
+        leading=16.5,
         alignment=1,
-        spaceAfter=4
+        textColor=PRIMARY,
+        spaceAfter=3
     )
 
     subtitle_center_style = ParagraphStyle(
-        'Subtitle_Format',
+        'SubTitleCenter',
         parent=styles['Normal'],
         fontName='Helvetica-Oblique',
-        fontSize=9,
-        leading=12,
-        textColor=SLATE,
+        fontSize=8.5,
+        leading=11.5,
         alignment=1,
-        spaceAfter=7
+        textColor=SLATE,
+        spaceAfter=5
     )
 
     meta_line_style = ParagraphStyle(
         'MetaLine',
         parent=styles['Normal'],
         fontName='Helvetica',
-        fontSize=8,
+        fontSize=8.0,
         leading=11,
-        textColor=CHARCOAL,
         alignment=1,
-        spaceAfter=2.5
+        textColor=CHARCOAL,
+        spaceAfter=1.5
     )
 
     repo_line_style = ParagraphStyle(
         'RepoLine',
         parent=styles['Normal'],
         fontName='Helvetica',
-        fontSize=8,
+        fontSize=8.0,
         leading=11,
-        textColor=CHARCOAL,
         alignment=1,
-        spaceAfter=8
+        textColor=NAVY,
+        spaceAfter=5
     )
 
+    # Content Styles
     h1_style = ParagraphStyle(
         'Heading1_Custom',
         parent=styles['Normal'],
         fontName='Helvetica-Bold',
-        fontSize=11.5,
-        leading=15,
+        fontSize=11,
+        leading=14,
         textColor=NAVY,
-        spaceBefore=8,
-        spaceAfter=4,
+        spaceBefore=6,
+        spaceAfter=3,
         keepWithNext=True
     )
 
@@ -155,11 +148,11 @@ def create_report():
         'Heading2_Custom',
         parent=styles['Normal'],
         fontName='Helvetica-Bold',
-        fontSize=9.5,
-        leading=13,
-        textColor=SLATE,
-        spaceBefore=6,
-        spaceAfter=2.5,
+        fontSize=9.0,
+        leading=12,
+        textColor=PRIMARY,
+        spaceBefore=4.5,
+        spaceAfter=2,
         keepWithNext=True
     )
 
@@ -168,7 +161,7 @@ def create_report():
         parent=styles['Normal'],
         fontName='Helvetica',
         fontSize=8.0,
-        leading=10.8,
+        leading=11.0,
         textColor=CHARCOAL,
         spaceAfter=3.5
     )
@@ -178,11 +171,11 @@ def create_report():
         parent=styles['Normal'],
         fontName='Helvetica',
         fontSize=8.0,
-        leading=10.8,
+        leading=11.0,
         textColor=CHARCOAL,
         leftIndent=14,
         firstLineIndent=-9,
-        spaceAfter=2
+        spaceAfter=2.5
     )
 
     table_header_style = ParagraphStyle(
@@ -226,7 +219,7 @@ def create_report():
     story = []
 
     # =========================================================================
-    # PAGE 1: TITLE & STUDENT METADATA (MATCHING USER-PROVIDED IMAGE FORMAT)
+    # PAGE 1: TITLE, STUDENT METADATA & PROBLEM STATEMENT
     # =========================================================================
     story.append(Paragraph("23CSE452: BUSINESS ANALYTICS — INDIVIDUAL CASE STUDY", course_header_style))
     story.append(Paragraph("The Bus-Factor Index: A Supply-Chain Risk Scoring Framework for Predicting Open-Source Package Abandonment", main_title_style))
@@ -251,27 +244,32 @@ def create_report():
         body_style
     ))
     story.append(Paragraph(
-        "Historical catastrophes in the software industry demonstrate the extreme fragility of this model. "
-        "In 2016, the unpublishing of <i>left-pad</i> (an 11-line string padding utility) incapacitated deployment pipelines worldwide for hours. "
-        "In 2018, the maintainer of <i>event-stream</i> (downloaded 2M times/week) transferred repository administrative access to an unknown party due to burnout, "
-        "resulting in a targeted cryptocurrency-stealing backdoor injected into downstream applications. "
-        "More recently, packages such as <i>request</i> and <i>colors.js</i> demonstrated that critical foundational libraries can quietly stall or self-destruct.",
+        "Historically, the sudden cessation of maintenance in foundational packages has inflicted widespread disruption across global IT infrastructure. "
+        "Prominent historical crises—such as the withdrawal of <code>left-pad</code> (which broke thousands of production JavaScript builds worldwide), "
+        "the deprecation of <code>request</code> (still downloaded over 15 million times per month despite being unmaintained), and the <code>event-stream</code> "
+        "cryptojacking compromise—demonstrate that unmaintained dependencies represent critical operational vulnerabilities.",
         body_style
     ))
 
     story.append(Paragraph("<b>1.2 The Failure of Default Vanity Metrics</b>", h2_style))
     story.append(Paragraph(
-        "Enterprise engineering leadership (CTOs, Chief Information Security Officers, Platform Architects) currently lacks a systematic, "
-        "predictive mechanism to distinguish actively maintained libraries from those quietly degrading toward abandonment. "
-        "Today, procurement and security teams rely almost exclusively on <b>GitHub stars</b> and <b>monthly download counts</b> as adoption proxies. "
-        "However, empirical software engineering research proves that both metrics are <b>lagging, inflated vanity indicators</b>. "
-        "Monthly download counts remain high for years after a library is abandoned because automated Continuous Integration (CI/CD) pipelines, "
-        "container builds, and legacy transitive dependencies generate programmatic pulls. "
+        "Enterprises currently assess third-party software risks using surface-level 'vanity metrics'—predominantly <b>GitHub Stars</b>, <b>Forks</b>, and <b>Monthly Download Counts</b>. "
+        "However, our empirical analysis reveals that these indicators suffer from extreme inertia and provide a dangerously false sense of security. "
+        "High-volume downloads are driven by automated CI/CD build scripts, container image rebuilds, and frozen transitive lockfiles rather than conscious, active developer adoption. "
         "Consequently, high download numbers reflect <i>systemic enterprise exposure</i> rather than project vitality.",
         body_style
     ))
 
-    story.append(Paragraph("<b>1.3 Specific Case Study Objectives</b>", h2_style))
+    story.append(Paragraph("<b>1.3 Target Class Definitions</b>", h2_style))
+    story.append(Paragraph(
+        "To provide actionable operational classification, we categorize packages into three mutually exclusive ground-truth risk states:",
+        body_style
+    ))
+    story.append(Paragraph("• <b>Abandonment-Imminent:</b> Packages exhibiting <b>&ge; 12 months (365+ days) of complete inactivity</b> with an unaddressed issue backlog or formal deprecation tags. These represent functionally dormant libraries requiring urgent intervention.", bullet_style))
+    story.append(Paragraph("• <b>At-Risk:</b> Packages exhibiting <b>6–12 months (180–365 days) of maintenance inactivity</b>, or projects possessing a dangerous single-maintainer bottleneck (Contributor Gini &ge; 0.85) alongside declining issue resolution velocity.", bullet_style))
+    story.append(Paragraph("• <b>Healthy:</b> Actively maintained packages with regular commits, active pull-request reviews, and releases within the preceding 180 days.", bullet_style))
+
+    story.append(Paragraph("<b>1.4 Specific Case Study Objectives</b>", h2_style))
     story.append(Paragraph(
         "To resolve this systemic visibility gap, this case study establishes <b>The Bus-Factor Index</b>, an end-to-end business analytics framework with three specific objectives:",
         body_style
@@ -283,7 +281,7 @@ def create_report():
     story.append(PageBreak())
 
     # =========================================================================
-    # PAGE 2: DATA COLLECTION & PREPROCESSING
+    # PAGE 2: DATA COLLECTION & PREPROCESSING PIPELINE
     # =========================================================================
     story.append(Paragraph("2. Data Collection and Dataset Description", h1_style))
     story.append(HRFlowable(width="100%", thickness=1, color=SLATE, spaceAfter=5, spaceBefore=0))
@@ -351,15 +349,15 @@ def create_report():
     story.append(PageBreak())
 
     # =========================================================================
-    # PAGE 3: EDA FIGURES 1 & 2
+    # PAGE 3: EDA FIGURES 1, 2, 3 (SEAMLESS TRIPLE-FIGURE SPREAD)
     # =========================================================================
     story.append(Paragraph("<b>3.2 Exploratory Visualizations and Business Interpretations</b>", h2_style))
 
     # Figure 1: Risk Distribution
     if os.path.exists('figures/eda_risk_distribution.png'):
-        story.append(Image('figures/eda_risk_distribution.png', width=490, height=160))
+        story.append(Image('figures/eda_risk_distribution.png', width=485, height=140))
         story.append(Paragraph("<b>Figure 1:</b> Ecosystem Risk Class Distribution overall (N=443) and cross-tabulated across npm and PyPI registries.", table_body_style))
-        story.append(Spacer(1, 3))
+        story.append(Spacer(1, 2))
     story.append(Paragraph(
         "<b>Business Interpretation (Risk Distribution):</b> "
         "The overall sample reveals an alarming ecosystem baseline: <b>49.7% of packages (n=220) are Abandonment-Imminent</b>, "
@@ -368,13 +366,13 @@ def create_report():
         "This confirms that enterprise dependency graphs rest upon an unmonitored foundation where nearly half of common dependencies are functionally dormant.",
         body_style
     ))
-    story.append(Spacer(1, 5))
+    story.append(Spacer(1, 3))
 
     # Figure 2: Inactivity & Cadence
     if os.path.exists('figures/eda_maintenance_inactivity.png'):
-        story.append(Image('figures/eda_maintenance_inactivity.png', width=490, height=160))
+        story.append(Image('figures/eda_maintenance_inactivity.png', width=485, height=140))
         story.append(Paragraph("<b>Figure 2:</b> Maintenance Inactivity duration (days elapsed since last release, log scale) and Annualized Release Cadence across Risk Classes.", table_body_style))
-        story.append(Spacer(1, 3))
+        story.append(Spacer(1, 2))
     story.append(Paragraph(
         "<b>Business Interpretation (Maintenance Inactivity & Cadence):</b> "
         "The median inactivity duration for Abandonment-Imminent packages exceeds 1,200 days (~3.3 years), with historical release cadences collapsing to $<1.5$ releases/year. "
@@ -382,52 +380,46 @@ def create_report():
         "A multi-month deceleration in release cadence serves as a vital leading indicator of maintainer fatigue long before total project abandonment occurs.",
         body_style
     ))
+    story.append(Spacer(1, 3))
 
-    story.append(PageBreak())
-
-    # =========================================================================
-    # PAGE 4: EDA FIGURES 3 & 4
-    # =========================================================================
     # Figure 3: Contributor Concentration
     if os.path.exists('figures/eda_contributor_concentration.png'):
-        story.append(Image('figures/eda_contributor_concentration.png', width=490, height=160))
+        story.append(Image('figures/eda_contributor_concentration.png', width=485, height=140))
         story.append(Paragraph("<b>Figure 3:</b> Contributor Gini Coefficient (The Bus Factor Index) and Lead Contributor Commit Share vs Issue Resolution Velocity.", table_body_style))
-        story.append(Spacer(1, 3))
+        story.append(Spacer(1, 2))
     story.append(Paragraph(
         "<b>Business Interpretation (Contributor Concentration & The Bus Factor):</b> "
         "Contributor concentration is the operational root cause of open-source failure. "
         "At-Risk and Abandonment-Imminent packages exhibit median Gini coefficients of <b>0.89 and 0.94</b> respectively, meaning a single developer author accounts for nearly all code. "
-        "The right-hand scatter plot demonstrates that once lead-contributor commit share crosses <b>80%</b>, the Issue Resolution Ratio plummets from 85% down below 40%. "
-        "A single-maintainer bottleneck directly chokes issue triage, leading directly to developer burnout and repository abandonment.",
+        "Once lead-contributor commit share crosses <b>80%</b>, the Issue Resolution Ratio plummets from 85% down below 40%, directly precipitating developer burnout.",
         body_style
     ))
-    story.append(Spacer(1, 5))
 
+    story.append(PageBreak())
+
+    # =========================================================================
+    # PAGE 4: EDA FIGURES 4, 5, 6 (SEAMLESS TRIPLE-FIGURE SPREAD)
+    # =========================================================================
     # Figure 4: Downloads vs Risk
     if os.path.exists('figures/eda_downloads_vs_risk.png'):
-        story.append(Image('figures/eda_downloads_vs_risk.png', width=490, height=160))
+        story.append(Image('figures/eda_downloads_vs_risk.png', width=485, height=142))
         story.append(Paragraph("<b>Figure 4:</b> Monthly Download Volume Distribution across Risk Classes and Breakdown across High-Impact (>10M) and Deprecated Packages.", table_body_style))
-        story.append(Spacer(1, 3))
+        story.append(Spacer(1, 2))
     story.append(Paragraph(
         "<b>Business Interpretation (Downloads vs Risk: The Vanity Paradox):</b> "
         "The empirical data unequivocally disproves the common assumption that high download volume signals library health. "
         "The download distributions of Abandonment-Imminent packages overlap heavily with Healthy packages (both averaging $10^6$ to $10^8$ monthly downloads). "
         "Formally deprecated or abandoned libraries like <i>request</i> (15M downloads/month) and <i>left-pad</i> (2.5M downloads/month) continue to register millions of monthly downloads. "
-        "This provides conclusive empirical proof that monthly download volume is completely decoupled from maintainer health. "
-        "Treating downloads as a safety heuristic exposes enterprise systems to severe unpatched vulnerabilities.",
+        "This provides conclusive empirical proof that monthly download volume is completely decoupled from maintainer health.",
         body_style
     ))
+    story.append(Spacer(1, 3))
 
-    story.append(PageBreak())
-
-    # =========================================================================
-    # PAGE 5: EDA FIGURES 5 & 6
-    # =========================================================================
     # Figure 5: Dependents & Blast Radius
     if os.path.exists('figures/eda_dependents_vs_risk.png'):
-        story.append(Image('figures/eda_dependents_vs_risk.png', width=490, height=160))
+        story.append(Image('figures/eda_dependents_vs_risk.png', width=485, height=142))
         story.append(Paragraph("<b>Figure 5:</b> Downstream Dependents and Calculated Blast Radius Index (0–100 Scale) across Risk Classes.", table_body_style))
-        story.append(Spacer(1, 3))
+        story.append(Spacer(1, 2))
     story.append(Paragraph(
         "<b>Business Interpretation (Downstream Blast Radius Exposure):</b> "
         "Over 40% of Abandonment-Imminent packages possess High or Critical Blast Radius scores ($>40$). "
@@ -435,13 +427,13 @@ def create_report():
         "any zero-day security flaw, runtime incompatibility, or malicious account takeover cascades silently into production without an upstream maintainer to publish a fix.",
         body_style
     ))
-    story.append(Spacer(1, 5))
+    story.append(Spacer(1, 3))
 
     # Figure 6: Feature Correlation Heatmap
     if os.path.exists('figures/eda_feature_correlation.png'):
-        story.append(Image('figures/eda_feature_correlation.png', width=460, height=170))
+        story.append(Image('figures/eda_feature_correlation.png', width=460, height=152))
         story.append(Paragraph("<b>Figure 6:</b> Pearson Correlation Heatmap across Contributor Concentration, Inactivity, Issue Triage, and Ecosystem Blast Radius.", table_body_style))
-        story.append(Spacer(1, 3))
+        story.append(Spacer(1, 2))
     story.append(Paragraph(
         "<b>Business Interpretation (Feature Correlation & Vanity Metric Decoupling):</b> "
         "The correlation matrix reinforces our core architectural hypothesis: Contributor Gini correlates strongly with Top-1 Commit Share ($r = 0.84$) "
@@ -454,7 +446,7 @@ def create_report():
     story.append(PageBreak())
 
     # =========================================================================
-    # PAGE 6: ANALYTICS METHOD & SOTA COMPARISON TABLE
+    # PAGE 5: ANALYTICS METHOD & SOTA COMPARISON TABLE
     # =========================================================================
     story.append(Paragraph("4. Analytics Method and Implementation", h1_style))
     story.append(HRFlowable(width="100%", thickness=1, color=SLATE, spaceAfter=5, spaceBefore=0))
@@ -558,7 +550,7 @@ def create_report():
     story.append(PageBreak())
 
     # =========================================================================
-    # PAGE 7: RESULTS, PREDICTIVE PERFORMANCE & CONFUSION MATRIX
+    # PAGE 6: RESULTS, PERFORMANCE EVALUATION, CONFUSION MATRIX & FEATURE IMPORTANCE
     # =========================================================================
     story.append(Paragraph("6. Results, Business Insights and Recommendations", h1_style))
     story.append(HRFlowable(width="100%", thickness=1, color=SLATE, spaceAfter=5, spaceBefore=0))
@@ -589,12 +581,12 @@ def create_report():
         ('BOTTOMPADDING', (0, 0), (-1, -1), 2.5),
     ]))
     story.append(perf_table)
-    story.append(Spacer(1, 5))
+    story.append(Spacer(1, 4))
 
     if os.path.exists('figures/model_confusion_matrix.png'):
-        story.append(Image('figures/model_confusion_matrix.png', width=480, height=170))
+        story.append(Image('figures/model_confusion_matrix.png', width=480, height=148))
         story.append(Paragraph("<b>Figure 7:</b> Test Set Confusion Matrix (Raw counts and Normalized percentages across synchronized classes).", table_body_style))
-        story.append(Spacer(1, 3))
+        story.append(Spacer(1, 2))
     story.append(Paragraph(
         "<b>Confusion Matrix Analysis:</b> Out of 55 true Abandonment-Imminent packages, the model correctly identifies <b>39 packages (70.9% recall)</b>, "
         "with an exceptional precision of <b>81.2% (39/48)</b>. Crucially, only 1 At-Risk package was misclassified as Abandonment-Imminent, "
@@ -602,16 +594,12 @@ def create_report():
         "false alarms on Healthy packages are strictly minimized while true dormant packages are proactively flagged for remediation.",
         body_style
     ))
+    story.append(Spacer(1, 3))
 
-    story.append(PageBreak())
-
-    # =========================================================================
-    # PAGE 8: FEATURE IMPORTANCE & BLAST RADIUS ACTION MATRIX
-    # =========================================================================
     if os.path.exists('figures/model_feature_importance.png'):
-        story.append(Image('figures/model_feature_importance.png', width=440, height=175))
+        story.append(Image('figures/model_feature_importance.png', width=440, height=148))
         story.append(Paragraph("<b>Figure 8:</b> Feature Importance Ranking (Entropy Impurity Weights) for Non-Leaking Predictors.", table_body_style))
-        story.append(Spacer(1, 3))
+        story.append(Spacer(1, 2))
     story.append(Paragraph(
         "<b>Key Modeling Finding:</b> As illustrated in Figure 8, the most critical non-leaking predictors of abandonment risk are: "
         "<b>(1) Historical Release Count (33.4%)</b>, <b>(2) Open Issue Backlog (24.2%)</b>, <b>(3) Contributor Gini / Bus Factor Index (23.5%)</b>, "
@@ -619,8 +607,12 @@ def create_report():
         "This validates our core thesis: maintainer concentration and workload saturation are the primary structural determinants of project death.",
         body_style
     ))
-    story.append(Spacer(1, 5))
 
+    story.append(PageBreak())
+
+    # =========================================================================
+    # PAGE 7: BLAST RADIUS ACTION MATRIX, GOVERNANCE TIERS & IMPLEMENTATION ROADMAP
+    # =========================================================================
     story.append(Paragraph("<b>6.2 The Bus-Factor Blast Radius Strategic Action Matrix</b>", h2_style))
     story.append(Paragraph(
         "To transform analytical predictions into practical enterprise governance, we map predicted risk against downstream blast radius. "
@@ -628,21 +620,17 @@ def create_report():
         body_style
     ))
     if os.path.exists('figures/business_blast_radius_matrix.png'):
-        story.append(Image('figures/business_blast_radius_matrix.png', width=480, height=175))
+        story.append(Image('figures/business_blast_radius_matrix.png', width=480, height=155))
         story.append(Paragraph("<b>Figure 9:</b> The Bus-Factor Blast Radius Strategic Action Matrix: Predicted Maintainer Risk vs Downstream Blast Radius.", table_body_style))
-        story.append(Spacer(1, 3))
-
-    story.append(PageBreak())
-
-    # =========================================================================
-    # PAGE 9: ENTERPRISE GOVERNANCE TIERS & IMPLEMENTATION ROADMAP
-    # =========================================================================
-    story.append(Paragraph("<b>6.3 Enterprise Governance Tiers & Practical Interventions</b>", h2_style))
+        story.append(Spacer(1, 2))
     story.append(Paragraph(
-        "By dividing the risk-impact plane into four quadrants, organizations can prescribe automated, defensible governance actions:",
+        "<b>Action Matrix Interpretation:</b> Packages clustering in the top-right quadrant (Quadrant 1) represent systemic, existential vulnerabilities—high blast radius combined with imminent abandonment. "
+        "Quadrant 2 represents high-leverage intervention targets where corporate sponsorship can expand maintainer redundancy before burnout triggers abandonment.",
         body_style
     ))
+    story.append(Spacer(1, 2))
 
+    story.append(Paragraph("<b>6.3 Enterprise Governance Tiers & Practical Interventions</b>", h2_style))
     action_matrix_data = [
         [
             Paragraph("Governance Quadrant", table_header_style),
@@ -681,19 +669,15 @@ def create_report():
         ('BACKGROUND', (0, 0), (-1, 0), NAVY),
         ('GRID', (0, 0), (-1, -1), 0.5, BORDER_COLOR),
         ('ROWBACKGROUNDS', (0, 1), (-1, -1), [WHITE, ROW_ALT]),
-        ('TOPPADDING', (0, 0), (-1, -1), 3),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ('TOPPADDING', (0, 0), (-1, -1), 2.2),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 2.2),
         ('LEFTPADDING', (0, 0), (-1, -1), 4),
         ('RIGHTPADDING', (0, 0), (-1, -1), 4),
     ]))
     story.append(action_table)
-    story.append(Spacer(1, 6))
+    story.append(Spacer(1, 3))
 
     story.append(Paragraph("<b>6.4 Enterprise Implementation Roadmap & CI/CD Governance Policies</b>", h2_style))
-    story.append(Paragraph(
-        "To embed the Bus-Factor Index into software engineering workflows, organizations should execute a structured four-phase adoption roadmap:",
-        body_style
-    ))
     story.append(Paragraph("• <b>Phase 1: Pre-Commit & Ingestion Gate (Automated Bus Factor Scoring):</b> Integrate a custom GitHub Action or GitLab CI stage that computes the Bus Factor Index on all proposed dependency additions in <code>package.json</code> or <code>pyproject.toml</code>. Pull requests introducing packages with Contributor Gini &ge; 0.85 or Bus Factor = 1 require mandatory architectural review.", bullet_style))
     story.append(Paragraph("• <b>Phase 2: Dual-Approval Architecture for High-Blast Dependencies:</b> For dependencies in Quadrants 1 and 2 (Blast Radius &ge; 50), mandate dual-approval sign-offs from both the Platform Architect and the Product Security Lead before approving version increments.", bullet_style))
     story.append(Paragraph("• <b>Phase 3: Automated Vendorization & Internal Mirroring:</b> Automatically mirror all Quadrant 1 and Quadrant 2 dependencies into an immutable internal enterprise artifact registry (e.g. Nexus / Artifactory), protecting builds against sudden unpublishing or account hijacking.", bullet_style))
@@ -702,7 +686,7 @@ def create_report():
     story.append(PageBreak())
 
     # =========================================================================
-    # PAGE 10: CONCLUSION, LIMITATIONS, AND ACADEMIC REFERENCES
+    # PAGE 8: CONCLUSION, STRATEGIC IMPACT, LIMITATIONS & ACADEMIC REFERENCES
     # =========================================================================
     story.append(Paragraph("7. Conclusion, Strategic Impact and Academic References", h1_style))
     story.append(HRFlowable(width="100%", thickness=1, color=SLATE, spaceAfter=5, spaceBefore=0))
@@ -744,13 +728,8 @@ def create_report():
     for r in refs:
         story.append(Paragraph(r, ParagraphStyle('RefStyle', parent=styles['Normal'], fontName='Helvetica', fontSize=7.2, leading=9.5, textColor=CHARCOAL, spaceAfter=2.5)))
 
-    # Build PDF with NumberedCanvas
     doc.build(story, canvasmaker=NumberedCanvas)
     print(f"Successfully generated {pdf_filename}!")
-    
-    # Check page count and size
-    file_size = os.path.getsize(pdf_filename)
-    print(f"File size: {file_size / 1024:.1f} KB")
 
 if __name__ == '__main__':
     create_report()

@@ -72,7 +72,7 @@ Following the approved case study proposal, packages are classified into three o
 bus-factor-index/
 ├── README.md                      # Comprehensive project documentation & business report
 ├── analysis.ipynb                 # Fully executed Jupyter Notebook (Pipeline -> EDA -> Modeling -> Evaluation)
-├── Case_Study_Report.pdf          # Formatted 10-page academic report (ReportLab generated)
+├── Case_Study_Report.pdf          # Formatted 8-page academic report (ReportLab generated)
 ├── data/
 │   ├── raw_dataset.csv            # Original multi-source API collected dataset (N=444 records)
 │   └── cleaned_dataset.csv        # Preprocessed analytical dataset with engineered metrics (N=443 records)
@@ -96,7 +96,7 @@ bus-factor-index/
     ├── preprocess_dataset.py      # Feature derivation, Gini calculation, target generation
     ├── generate_visualizations.py # Matplotlib & Seaborn high-res chart generation
     ├── build_notebook.py          # Programmatic Jupyter Notebook generation & execution
-    └── generate_pdf_report.py     # 10-Page publication-standard ReportLab PDF builder
+    └── generate_pdf_report.py     # 8-Page publication-standard ReportLab PDF builder
 ```
 
 ---
@@ -252,7 +252,7 @@ python scripts/generate_visualizations.py
 # 4. Programmatically build and execute analysis.ipynb
 python scripts/build_notebook.py
 
-# 5. Compile the 10-page Case_Study_Report.pdf
+# 5. Compile the 8-page Case_Study_Report.pdf
 python scripts/generate_pdf_report.py
 ```
 
