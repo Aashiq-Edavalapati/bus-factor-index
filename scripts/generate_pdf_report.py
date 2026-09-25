@@ -225,7 +225,7 @@ def create_report(pdf_filename="Case_Study_Report.pdf"):
     story.append(Paragraph("The Bus-Factor Index: A Supply-Chain Risk Scoring Framework for Predicting Open-Source Package Abandonment", main_title_style))
     story.append(Paragraph("A Data-Driven Empirical Framework Bridging Contributor Bus-Factor Scoring with Downstream Blast-Radius Risk Analytics", subtitle_center_style))
     story.append(Paragraph("<b>Student Name:</b> Aashiq Edavalapati &nbsp;&nbsp;|&nbsp;&nbsp; <b>Register Number:</b> CB.SC.U4CSE23560 &nbsp;&nbsp;|&nbsp;&nbsp; <b>Class / Section:</b> CSE - F", meta_line_style))
-    story.append(Paragraph("Department of Computer Science and Engineering &nbsp;&nbsp;|&nbsp;&nbsp; Amrita Vishwa Vidyapeetham &nbsp;&nbsp;|&nbsp;&nbsp", meta_line_style))
+    story.append(Paragraph("Department of Computer Science and Engineering &nbsp;&nbsp;|&nbsp;&nbsp; Amrita Vishwa Vidyapeetham", meta_line_style))
     story.append(Paragraph("<b>Code & Dataset Verification Repository:</b> <u>https://github.com/Aashiq-Edavalapati/bus-factor-index</u>", repo_line_style))
     story.append(HRFlowable(width="100%", thickness=0.8, color=BORDER_COLOR, spaceAfter=6, spaceBefore=0))
 
