@@ -155,137 +155,279 @@ We explore the distributions, behavioral divergence, and relationships between c
 
     # Visualization 1: Risk-Class Distribution
     cells.append(nbf.v4.new_markdown_cell("""### 4.1 Risk-Class Distribution Across the Ecosystem"""))
-    cells.append(nbf.v4.new_code_cell("""# 4.1 Risk-Class Distribution
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
-class_order = ['Healthy', 'At-Risk', 'Abandonment-Imminent']
-colors = {'Healthy': '#2e7d32', 'At-Risk': '#f57c00', 'Abandonment-Imminent': '#c62828'}
+    cells.append(nbf.v4.new_code_cell("""# 4.1 Risk-Class Distribution (Donut Chart & Ecosystem Grouped Bars)
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5.2))
+class_order = ['Abandonment-Imminent', 'At-Risk', 'Healthy']
+colors = {'Abandonment-Imminent': '#b71c1c', 'At-Risk': '#e65100', 'Healthy': '#1b5e20'}
 
 counts = df['risk_class'].value_counts()[class_order]
-pcts = (df['risk_class'].value_counts(normalize=True)[class_order] * 100).round(1)
+pcts = (counts / len(df) * 100).round(1)
 
-bars = ax1.bar(class_order, counts, color=[colors[c] for c in class_order], width=0.55, edgecolor='black', lw=1)
-for bar, pct in zip(bars, pcts):
-    yval = bar.get_height()
-    ax1.text(bar.get_x() + bar.get_width()/2.0, yval + 4, f"{int(yval)} ({pct}%)", ha='center', va='bottom', fontweight='bold')
-ax1.set_ylim(0, max(counts) * 1.18)
-ax1.set_title("Overall Risk Class Breakdown (N=443)")
-ax1.set_ylabel("Package Count")
+# Donut Chart
+wedges, texts, autotexts = ax1.pie(
+    counts,
+    labels=class_order,
+    autopct='%1.1f%%',
+    pctdistance=0.75,
+    colors=[colors[c] for c in class_order],
+    startangle=140,
+    wedgeprops=dict(width=0.45, edgecolor='white', linewidth=2)
+)
+for text in texts:
+    text.set_fontsize(10)
+    text.set_fontweight('bold')
+for autotext in autotexts:
+    autotext.set_fontsize(10.5)
+    autotext.set_fontweight('bold')
+    autotext.set_color('white')
 
-eco_risk = pd.crosstab(df['ecosystem'], df['risk_class'])[class_order]
-eco_risk_pct = eco_risk.div(eco_risk.sum(axis=1), axis=0) * 100
-eco_risk_pct.plot(kind='bar', stacked=True, ax=ax2, color=[colors[c] for c in class_order], edgecolor='black', lw=0.8)
-ax2.set_title("Risk Class Proportion: npm vs PyPI")
-ax2.set_ylabel("Proportion (%)")
-ax2.set_xticklabels(['npm', 'PyPI'], rotation=0)
-ax2.legend(title="Risk Class", loc='lower right')
-for c in ax2.containers:
-    ax2.bar_label(c, fmt='%.1f%%', label_type='center', color='white', fontweight='bold', fontsize=9)
+ax1.text(0, 0.08, f"N = {len(df)}", ha='center', va='center', fontsize=14, fontweight='bold', color='#0f172a')
+ax1.text(0, -0.12, "Packages", ha='center', va='center', fontsize=11, color='#475569')
+ax1.set_title("Ecosystem Risk Class Distribution (Donut Breakdown)", pad=15)
+
+# Ecosystem Grouped Bar Chart
+eco_ct = pd.crosstab(df['ecosystem'], df['risk_class'])[class_order]
+eco_pct = (pd.crosstab(df['ecosystem'], df['risk_class'], normalize='index')[class_order] * 100).round(1)
+
+x = np.arange(len(eco_ct.index))
+width = 0.25
+
+for idx, r_class in enumerate(class_order):
+    bars = ax2.bar(x + (idx - 1)*width, eco_ct[r_class], width=width,
+                   label=r_class, color=colors[r_class], edgecolor='black', linewidth=0.8)
+    for bar, pct in zip(bars, eco_pct[r_class]):
+        h = bar.get_height()
+        ax2.text(bar.get_x() + bar.get_width()/2.0, h + 3, f"{pct}%", ha='center', va='bottom', fontsize=9.5, fontweight='bold')
+
+ax2.set_xticks(x)
+ax2.set_xticklabels(['npm (Node.js)\\n[n=386]', 'PyPI (Python)\\n[n=57]'], fontweight='bold', fontsize=10.5)
+ax2.set_ylabel("Number of Packages")
+ax2.set_ylim(0, max(eco_ct.max()) * 1.18)
+ax2.set_title("Risk Class Distribution by Registry Ecosystem", pad=15)
+ax2.legend(title="Risk Class", frameon=True, loc='upper right')
 
 plt.tight_layout()
 plt.show()"""))
 
     cells.append(nbf.v4.new_markdown_cell("""**Business Interpretation (Risk-Class Distribution):**  
-Nearly half of sampled packages meet the threshold for `Abandonment-Imminent` (12+ months inactive with unresolved issues or officially deprecated), while ~19% are `At-Risk` and ~31% are active and `Healthy`. The npm ecosystem displays a high rate of micro-package abandonment, whereas PyPI packages exhibit longer lifespans but higher risk of single-maintainer bottlenecks. This confirms that enterprise dependency trees are fundamentally built on top of fragile, unmonitored infrastructure."""))
+Nearly half of sampled packages (49.7%, n=220) meet the threshold for `Abandonment-Imminent` (12+ months inactive with unresolved issues or officially deprecated), while 19.4% (n=86) are `At-Risk` and 30.9% (n=137) are active and `Healthy`. Both JavaScript (npm) and Python (PyPI) display severe abandonment rates (~49.5% and ~50.9% respectively). This confirms that enterprise dependency trees are fundamentally built on top of fragile, unmonitored infrastructure across modern polyglot technology stacks."""))
 
     # Visualization 2: Maintenance Inactivity vs Risk
     cells.append(nbf.v4.new_markdown_cell("""### 4.2 Maintenance Inactivity & Release Cadence vs Risk"""))
-    cells.append(nbf.v4.new_code_cell("""# 4.2 Maintenance Inactivity vs Risk
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+    cells.append(nbf.v4.new_code_cell("""# 4.2 Maintenance Inactivity (Violin Plot) & Release Cadence (ECDF Curves)
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5.2))
 
-sns.boxplot(x='risk_class', y='days_since_last_release', data=df, order=class_order,
-            palette=colors, hue='risk_class', legend=False, ax=ax1, width=0.5, fliersize=3)
-ax1.axhline(365, color='#c62828', linestyle='--', label='12-Month Inactivity Threshold')
-ax1.axhline(180, color='#f57c00', linestyle=':', label='6-Month Warning Threshold')
+# Kernel Violin Plot with Quartiles on Log Scale
+sns.violinplot(x='risk_class', y='days_since_last_release', data=df, order=class_order,
+               palette=colors, hue='risk_class', legend=False, inner='quartile', cut=0, ax=ax1)
+ax1.axhline(365, color='#c62828', linestyle='--', linewidth=1.5, label='1-Year Abandonment Boundary (365d)')
+ax1.axhline(180, color='#f57c00', linestyle=':', linewidth=1.5, label='6-Month Warning Boundary (180d)')
 ax1.set_yscale('log')
-ax1.set_title("Days Elapsed Since Last Release (Log Scale)")
-ax1.set_ylabel("Inactivity (Days, Log Scale)")
-ax1.legend(loc='lower left')
+ax1.set_title("Inactivity Duration Probability Density (Violin Plot, Log Scale)", pad=15)
+ax1.set_ylabel("Days Elapsed Since Last Release (Log Scale)")
+ax1.set_xlabel("Risk Classification")
+ax1.legend(loc='lower left', frameon=True, fontsize=9.5)
 
-sns.boxplot(x='risk_class', y='release_cadence_annual', data=df, order=class_order,
-            palette=colors, hue='risk_class', legend=False, ax=ax2, width=0.5, fliersize=3)
-ax2.set_title("Annual Release Cadence (Releases per Year)")
-ax2.set_ylabel("Cadence (Releases / Year)")
-ax2.set_ylim(-1, 35)
+# Empirical Cumulative Distribution Function (ECDF) for Cadence
+for r_class in class_order:
+    subset = df[df['risk_class'] == r_class]['release_cadence_annual']
+    sns.ecdfplot(subset, label=f"{r_class} (Median: {subset.median():.1f}/yr)",
+                 color=colors[r_class], linewidth=2.5, ax=ax2)
+
+ax2.axvline(1.5, color='#b71c1c', linestyle='--', alpha=0.7, label='1.5 Releases/Yr Critical Threshold')
+ax2.set_xlim(0, 25)
+ax2.set_title("Empirical Cumulative Distribution (ECDF) of Annual Release Cadence", pad=15)
+ax2.set_xlabel("Annualized Release Cadence (Releases / Year)")
+ax2.set_ylabel("Cumulative Probability P(Cadence ≤ x)")
+ax2.legend(title="Risk Class", frameon=True, loc='lower right', fontsize=9.5)
 
 plt.tight_layout()
 plt.show()"""))
 
     cells.append(nbf.v4.new_markdown_cell("""**Business Interpretation (Maintenance Inactivity & Cadence):**  
-`Abandonment-Imminent` packages exhibit a median inactivity duration exceeding 1,200 days (~3.3 years), with historical release cadences collapsing toward zero (< 1.5 releases/year). In contrast, `Healthy` packages average a release cadence of 5–12 releases per year and have pushed updates within the last 60 days. Stalling release cadence serves as an early operational signal of impending abandonment up to 12 months before complete dormancy occurs."""))
+`Abandonment-Imminent` packages exhibit a median inactivity duration exceeding 1,200 days (~3.3 years), with historical release cadences collapsing toward zero (< 1.5 releases/year). The ECDF curves demonstrate that over 80% of Abandonment-Imminent libraries publish fewer than 1.5 releases per year. In contrast, `Healthy` packages average a release cadence of 6.2 releases per year and have pushed updates within the last 60 days. Stalling release cadence serves as a vital operational early-warning signal up to 12 months before complete dormancy occurs."""))
 
     # Visualization 3: Contributor Concentration vs Risk
     cells.append(nbf.v4.new_markdown_cell("""### 4.3 Contributor Concentration & The Bus Factor Index vs Risk"""))
-    cells.append(nbf.v4.new_code_cell("""# 4.3 Contributor Concentration vs Risk
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+    cells.append(nbf.v4.new_code_cell("""# 4.3 Contributor Concentration (Bus Factor Tiers & Non-Linear Bottleneck Scatter)
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5.2))
 
-sns.boxplot(x='risk_class', y='contributor_gini', data=df, order=class_order,
-            palette=colors, hue='risk_class', legend=False, ax=ax1, width=0.5)
-ax1.set_title("Contributor Gini Coefficient by Risk Class")
-ax1.set_ylabel("Gini Coefficient (1.0 = Solo Committer)")
-ax1.set_ylim(0.4, 1.05)
+# Bus Factor Tier Grouped Breakdown
+def get_bf_tier(bf):
+    if bf == 1: return 'BF = 1 (Monopoly)'
+    elif bf == 2: return 'BF = 2 (Duopoly)'
+    elif bf <= 5: return 'BF = 3–5 (Small Core)'
+    else: return 'BF > 5 (Distributed)'
 
+df['bf_tier'] = df['bus_factor_approx'].apply(get_bf_tier)
+bf_tiers = ['BF = 1 (Monopoly)', 'BF = 2 (Duopoly)', 'BF = 3–5 (Small Core)', 'BF > 5 (Distributed)']
+bf_pct = pd.crosstab(df['risk_class'], df['bf_tier'], normalize='index')[bf_tiers].loc[class_order] * 100
+
+x = np.arange(len(class_order))
+width = 0.20
+tier_colors = ['#991b1b', '#ea580c', '#3b82f6', '#16a34a']
+
+for idx, tier in enumerate(bf_tiers):
+    bars = ax1.bar(x + (idx - 1.5)*width, bf_pct[tier], width=width,
+                   label=tier, color=tier_colors[idx], edgecolor='black', linewidth=0.8)
+    for bar in bars:
+        h = bar.get_height()
+        if h > 5:
+            ax1.text(bar.get_x() + bar.get_width()/2.0, h + 1.2, f"{int(round(h))}%", ha='center', va='bottom', fontsize=8.5, fontweight='bold')
+
+ax1.set_xticks(x)
+ax1.set_xticklabels(class_order, fontweight='bold', fontsize=9.5)
+ax1.set_ylabel("Percentage of Packages within Class (%)")
+ax1.set_ylim(0, 65)
+ax1.set_title("Bus Factor (Developers for 80% Commits) Tier Breakdown", pad=15)
+ax1.legend(title="Bus Factor Tier", frameon=True, loc='upper right', fontsize=8.5)
+
+# Scatter Plot with Bottleneck Zone
 sns.scatterplot(x='top_contributor_share', y='issue_resolution_ratio', hue='risk_class',
-                hue_order=class_order, palette=colors, data=df, ax=ax2, alpha=0.75, s=65, edgecolor='black')
-ax2.set_title("Lead Contributor Share vs Issue Resolution Velocity")
-ax2.set_xlabel("Lead Contributor Commit Share (Top-1 Share)")
-ax2.set_ylabel("Issue Resolution Ratio (Closed / Total Issues)")
-ax2.axvline(0.80, color='grey', linestyle='--', alpha=0.7, label='80% Solo Burden')
-ax2.axhline(0.60, color='grey', linestyle=':', alpha=0.7, label='60% Resolution Benchmark')
-ax2.legend(loc='lower left')
+                hue_order=class_order, palette=colors, data=df, ax=ax2, alpha=0.80, s=70, edgecolor='black', linewidth=0.5)
+
+from numpy.polynomial import Polynomial
+p_fit = Polynomial.fit(df['top_contributor_share'], df['issue_resolution_ratio'], deg=2)
+x_line = np.linspace(df['top_contributor_share'].min(), df['top_contributor_share'].max(), 100)
+ax2.plot(x_line, p_fit(x_line), color='#0f172a', linestyle='-', linewidth=2.5, label='Non-Linear Triage Decay Trend')
+
+ax2.axvspan(0.80, 1.02, color='#fee2e2', alpha=0.5, label='Solo Bottleneck Zone (>80% Lead Share)')
+ax2.axhline(0.40, color='#dc2626', linestyle=':', linewidth=1.5, label='40% Resolution Collapse Line')
+ax2.set_xlim(0.15, 1.03)
+ax2.set_ylim(-0.05, 1.05)
+ax2.set_title("Lead Contributor Share vs Issue Resolution Velocity", pad=15)
+ax2.set_xlabel("Share of Commits by Lead Contributor (Top-1 Share)")
+ax2.set_ylabel("Issue Resolution Ratio (Closed / Total)")
+ax2.legend(title="Risk Class & Guides", frameon=True, loc='lower left', fontsize=8.5)
 
 plt.tight_layout()
 plt.show()"""))
 
     cells.append(nbf.v4.new_markdown_cell(r"""**Business Interpretation (Contributor Concentration & Bus Factor):**  
-Packages classified as `At-Risk` and `Abandonment-Imminent` have median Contributor Gini coefficients above 0.88, with lead contributor commit shares frequently exceeding 85%. Furthermore, the scatter plot highlights a sharp degradation in issue resolution velocity: once a single developer shoulders $>80\%$ of the codebase, the issue resolution ratio plummets below 50%. The 'Bus Factor of 1' creates a severe organizational bottleneck where maintainer fatigue directly induces abandonment."""))
+Contributor concentration is the operational root cause of open-source failure. In `Abandonment-Imminent` packages, 35.9% exhibit complete solo monopolies (BF = 1) and 16.4% rely on duopolies (BF = 2), meaning over 52% rely on at most two developers. In contrast, over 54% of `Healthy` libraries maintain distributed teams (BF > 5). Furthermore, the scatter plot highlights a sharp non-linear decay: once lead contributor commit share crosses 80%, the issue resolution velocity plummets below 40%, directly inducing maintainer burnout and repository abandonment."""))
 
     # Visualization 4: Downloads vs Risk
     cells.append(nbf.v4.new_markdown_cell("""### 4.4 Monthly Download Volume vs Risk"""))
-    cells.append(nbf.v4.new_code_cell("""# 4.4 Downloads vs Risk
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+    cells.append(nbf.v4.new_code_cell("""# 4.4 Downloads vs Risk (KDE Density & High-Exposure Dormant Packages)
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5.2))
 
-for r in class_order:
-    sub = df[df['risk_class'] == r]
-    sns.kdeplot(sub['log_downloads_monthly'], label=r, color=colors[r], lw=2.5, ax=ax1, fill=True, alpha=0.18)
-ax1.set_title("Monthly Download Density (Log Scale)")
+for r_class in class_order:
+    subset = df[df['risk_class'] == r_class]
+    sns.kdeplot(subset['log_downloads_monthly'], label=r_class, color=colors[r_class],
+                linewidth=2.5, ax=ax1, fill=True, alpha=0.18)
+    median_val = subset['log_downloads_monthly'].median()
+    ax1.axvline(median_val, color=colors[r_class], linestyle=':', linewidth=1.8,
+                label=f"{r_class} Med: 10^{median_val:.1f}")
+
+ax1.set_title("Monthly Download Volume Density across Risk Classes (KDE)", pad=15)
 ax1.set_xlabel("Log10(Monthly Downloads + 1)")
-ax1.set_ylabel("Density")
-ax1.legend()
+ax1.set_ylabel("Kernel Density Estimate (KDE)")
+ax1.legend(title="Risk Class & Median", frameon=True, loc='upper left', fontsize=8.5)
 
-sns.boxplot(x='risk_class', y='log_downloads_monthly', data=df, order=class_order,
-            palette=colors, hue='risk_class', legend=False, ax=ax2, width=0.5, fliersize=3)
-ax2.set_title("Monthly Download Distribution (Log Scale)")
-ax2.set_ylabel("Log10(Monthly Downloads + 1)")
+# Horizontal Bar Chart of Landmark Abandoned Packages
+notable_dormant = df[
+    (df['risk_class'] == 'Abandonment-Imminent') &
+    (df['downloads_monthly'] >= 100000)
+].sort_values(by='downloads_monthly', ascending=True).tail(8)
+
+y_pos = np.arange(len(notable_dormant))
+dl_millions = notable_dormant['downloads_monthly'] / 1e6
+
+bars = ax2.barh(y_pos, dl_millions, color='#b71c1c', edgecolor='black', linewidth=0.8, height=0.55)
+for idx, (bar, days) in enumerate(zip(bars, notable_dormant['days_since_last_release'])):
+    val = bar.get_width()
+    ax2.text(val + 0.3, bar.get_y() + bar.get_height()/2.0,
+             f"{val:.1f}M/mo  ({int(days)}d inactive)", va='center', fontsize=9, fontweight='bold', color='#1e293b')
+
+ax2.set_yticks(y_pos)
+ax2.set_yticklabels(notable_dormant['package_name'], fontweight='bold', fontsize=10)
+ax2.set_xlabel("Monthly Downloads (Millions)")
+ax2.set_xlim(0, max(dl_millions) * 1.35)
+ax2.set_title("The Vanity Paradox: Dormant Packages Retaining Millions of Downloads", pad=15)
 
 plt.tight_layout()
 plt.show()"""))
 
     cells.append(nbf.v4.new_markdown_cell(r"""**Business Interpretation (Downloads vs Risk):**  
-Crucially, the download distribution of `Abandonment-Imminent` packages overlaps heavily with `Healthy` packages (median $\approx 10^6$ to $10^7$ downloads/month). Stale libraries such as `request`, `left-pad`, and `nomnom` continue to register millions of automated downloads per month due to locked transitive dependency graphs in CI/CD pipelines. This empirically invalidates monthly downloads as a safety proxy: high downloads signify systemic enterprise exposure, NOT package health."""))
+Crucially, the download distribution of `Abandonment-Imminent` packages overlaps heavily with `Healthy` packages (median $\approx 10^6$ to $10^7$ downloads/month). Formally deprecated or abandoned libraries like `request` (15M downloads/month) and `left-pad` (2.5M downloads/month) continue to register millions of automated downloads per month due to locked transitive dependency graphs in CI/CD pipelines. This empirically invalidates monthly downloads as a safety proxy: high downloads signify systemic enterprise exposure, NOT package health."""))
 
     # Visualization 5: Dependents & Blast Radius vs Risk
     cells.append(nbf.v4.new_markdown_cell("""### 4.5 Downstream Blast Radius Score vs Risk"""))
-    cells.append(nbf.v4.new_code_cell("""# 4.5 Blast Radius vs Risk
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+    cells.append(nbf.v4.new_code_cell("""# 4.5 Downstream Blast Radius (2D Centrality Bubble Plot & Stacked Severity Tiers)
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5.2))
 
-sns.boxplot(x='risk_class', y='log_dependents', data=df, order=class_order,
-            palette=colors, hue='risk_class', legend=False, ax=ax1, width=0.5, fliersize=3)
-ax1.set_title("Ecosystem Dependents (Log Scale)")
-ax1.set_ylabel("Log10(Dependents + 1)")
+# 2D Ecosystem Exposure Bubble Plot
+sns.scatterplot(
+    data=df,
+    x='log_downloads_monthly',
+    y='log_dependents',
+    hue='risk_class',
+    hue_order=class_order,
+    palette=colors,
+    size='blast_radius_score',
+    sizes=(25, 250),
+    alpha=0.75,
+    edgecolor='black',
+    linewidth=0.5,
+    ax=ax1
+)
 
-sns.boxplot(x='risk_class', y='blast_radius_score', data=df, order=class_order,
-            palette=colors, hue='risk_class', legend=False, ax=ax2, width=0.5, fliersize=3)
-ax2.set_title("Blast Radius Index (0–100 Scale)")
-ax2.set_ylabel("Blast Radius Score")
-ax2.axhline(60, color='#c62828', linestyle='--', label='Critical Exposure (>=60)')
-ax2.axhline(40, color='#f57c00', linestyle=':', label='High Exposure (>=40)')
-ax2.legend(loc='lower left')
+ax1.axvspan(5.5, 9.5, ymin=0.45, ymax=1.0, color='#fee2e2', alpha=0.35)
+ax1.axvline(5.5, color='#991b1b', linestyle='--', alpha=0.6)
+ax1.axhline(2.0, color='#991b1b', linestyle='--', alpha=0.6)
+
+annot_pkgs = ['request', 'left-pad', 'core-js', 'express', 'lodash', 'nomnom', 'colors']
+for _, row in df[df['package_name'].isin(annot_pkgs)].iterrows():
+    ax1.annotate(row['package_name'],
+                 (row['log_downloads_monthly'], row['log_dependents']),
+                 xytext=(6, 5), textcoords='offset points',
+                 fontsize=8.5, fontweight='bold',
+                 bbox=dict(boxstyle='round,pad=0.2', facecolor='white', alpha=0.8, edgecolor='#cbd5e1'))
+
+ax1.set_title("2D Ecosystem Centrality: Downloads vs Downstream Dependents", pad=15)
+ax1.set_xlabel("Log10(Monthly Downloads + 1)")
+ax1.set_ylabel("Log10(Downstream Dependents + 1)")
+ax1.legend(loc='lower left', frameon=True, fontsize=8, ncol=2)
+
+# Horizontal 100% Stacked Bar Chart for Blast Radius Tiers
+def get_blast_tier(score):
+    if score >= 65: return 'Critical (≥65)'
+    elif score >= 50: return 'High (50–64)'
+    elif score >= 35: return 'Moderate (35–49)'
+    else: return 'Low (<35)'
+
+df['blast_tier'] = df['blast_radius_score'].apply(get_blast_tier)
+blast_tiers = ['Low (<35)', 'Moderate (35–49)', 'High (50–64)', 'Critical (≥65)']
+blast_colors = ['#388e3c', '#fbc02d', '#f57c00', '#d32f2f']
+
+tier_pct = pd.crosstab(df['risk_class'], df['blast_tier'], normalize='index')[blast_tiers].loc[class_order] * 100
+
+y = np.arange(len(class_order))
+left = np.zeros(len(class_order))
+
+for idx, tier in enumerate(blast_tiers):
+    values = tier_pct[tier].values
+    bars = ax2.barh(y, values, left=left, height=0.55, label=tier,
+                    color=blast_colors[idx], edgecolor='white', linewidth=1.2)
+    for bar_idx, val in enumerate(values):
+        if val > 6:
+            ax2.text(left[bar_idx] + val/2.0, y[bar_idx], f"{val:.1f}%",
+                     ha='center', va='center', color='white' if idx in [0, 2, 3] else 'black',
+                     fontweight='bold', fontsize=9.5)
+    left += values
+
+ax2.set_yticks(y)
+ax2.set_yticklabels(class_order, fontweight='bold', fontsize=10)
+ax2.set_xlabel("Percentage of Packages (%)")
+ax2.set_xlim(0, 100)
+ax2.set_title("Downstream Blast Radius Exposure Tier Breakdown (%)", pad=15)
+ax2.legend(loc='lower left', bbox_to_anchor=(0.0, 1.02), ncol=4, frameon=True, fontsize=8.5)
 
 plt.tight_layout()
 plt.show()"""))
 
     cells.append(nbf.v4.new_markdown_cell("""**Business Interpretation (Dependents & Blast Radius):**  
-Downstream Blast Radius combines ecosystem dependents and monthly download volume. Over 40% of packages in the `Abandonment-Imminent` class maintain High or Critical Blast Radius scores ($>40$). When an abandoned dependency possesses a high blast radius, any zero-day vulnerability or runtime deprecation cascades directly into production applications without an upstream author available to release a patch."""))
+Downstream Blast Radius combines ecosystem dependents and monthly download volume into a 0–100 centrality score. Over 67% of `Abandonment-Imminent` packages fall into High (50–64) or Critical (≥65) Blast Radius tiers. As shown in the 2D centrality plot, many abandoned packages occupy high-exposure ecosystem nodes (Downloads ≥ 10^5 and Dependents ≥ 10^2). When an abandoned dependency possesses high blast radius, any zero-day vulnerability cascades directly into production applications without an upstream author available to release a patch."""))
 
     # Visualization 6: Feature Correlation Matrix
     cells.append(nbf.v4.new_markdown_cell("""### 4.6 Feature Correlation Matrix"""))

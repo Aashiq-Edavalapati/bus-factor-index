@@ -225,7 +225,7 @@ def create_report(pdf_filename="Case_Study_Report.pdf"):
     story.append(Paragraph("The Bus-Factor Index: A Supply-Chain Risk Scoring Framework for Predicting Open-Source Package Abandonment", main_title_style))
     story.append(Paragraph("A Data-Driven Empirical Framework Bridging Contributor Bus-Factor Scoring with Downstream Blast-Radius Risk Analytics", subtitle_center_style))
     story.append(Paragraph("<b>Student Name:</b> Aashiq Edavalapati &nbsp;&nbsp;|&nbsp;&nbsp; <b>Register Number:</b> CB.SC.U4CSE23560 &nbsp;&nbsp;|&nbsp;&nbsp; <b>Class / Section:</b> CSE - F", meta_line_style))
-    story.append(Paragraph("Department of Computer Science and Engineering &nbsp;&nbsp;|&nbsp;&nbsp; Amrita Vishwa Vidyapeetham &nbsp;&nbsp;|&nbsp;&nbsp; Academic Year: 2026", meta_line_style))
+    story.append(Paragraph("Department of Computer Science and Engineering &nbsp;&nbsp;|&nbsp;&nbsp; Amrita Vishwa Vidyapeetham &nbsp;&nbsp;|&nbsp;&nbsp", meta_line_style))
     story.append(Paragraph("<b>Code & Dataset Verification Repository:</b> <u>https://github.com/Aashiq-Edavalapati/bus-factor-index</u>", repo_line_style))
     story.append(HRFlowable(width="100%", thickness=0.8, color=BORDER_COLOR, spaceAfter=6, spaceBefore=0))
 
@@ -371,11 +371,12 @@ def create_report(pdf_filename="Case_Study_Report.pdf"):
     # Figure 2: Inactivity & Cadence
     if os.path.exists('figures/eda_maintenance_inactivity.png'):
         story.append(Image('figures/eda_maintenance_inactivity.png', width=485, height=140))
-        story.append(Paragraph("<b>Figure 2:</b> Maintenance Inactivity duration (days elapsed since last release, log scale) and Annualized Release Cadence across Risk Classes.", table_body_style))
+        story.append(Paragraph("<b>Figure 2:</b> Inactivity Duration Density (Kernel Violin Plot, Log Scale) and Empirical Cumulative Distribution (ECDF) of Annual Release Cadence.", table_body_style))
         story.append(Spacer(1, 2))
     story.append(Paragraph(
         "<b>Business Interpretation (Maintenance Inactivity & Cadence):</b> "
         "The median inactivity duration for Abandonment-Imminent packages exceeds 1,200 days (~3.3 years), with historical release cadences collapsing to $<1.5$ releases/year. "
+        "The ECDF curves demonstrate that over 80% of Abandonment-Imminent libraries publish fewer than 1.5 releases per year. "
         "In contrast, Healthy libraries maintain a median release cadence of 6.2 releases/year and have pushed updates within the last 60 days. "
         "A multi-month deceleration in release cadence serves as a vital leading indicator of maintainer fatigue long before total project abandonment occurs.",
         body_style
@@ -385,12 +386,13 @@ def create_report(pdf_filename="Case_Study_Report.pdf"):
     # Figure 3: Contributor Concentration
     if os.path.exists('figures/eda_contributor_concentration.png'):
         story.append(Image('figures/eda_contributor_concentration.png', width=485, height=140))
-        story.append(Paragraph("<b>Figure 3:</b> Contributor Gini Coefficient (The Bus Factor Index) and Lead Contributor Commit Share vs Issue Resolution Velocity.", table_body_style))
+        story.append(Paragraph("<b>Figure 3:</b> Bus Factor Tier Breakdown (Developers for 80% Commits) and Lead Contributor Commit Share vs Issue Resolution Velocity.", table_body_style))
         story.append(Spacer(1, 2))
     story.append(Paragraph(
         "<b>Business Interpretation (Contributor Concentration & The Bus Factor):</b> "
         "Contributor concentration is the operational root cause of open-source failure. "
-        "At-Risk and Abandonment-Imminent packages exhibit median Gini coefficients of <b>0.89 and 0.94</b> respectively, meaning a single developer author accounts for nearly all code. "
+        "In Abandonment-Imminent packages, 35.9% exhibit complete solo monopolies (BF = 1) and 16.4% rely on duopolies (BF = 2), meaning over 52% rely on at most two developers. "
+        "In contrast, over 54% of Healthy libraries maintain distributed teams (BF > 5). "
         "Once lead-contributor commit share crosses <b>80%</b>, the Issue Resolution Ratio plummets from 85% down below 40%, directly precipitating developer burnout.",
         body_style
     ))
@@ -403,7 +405,7 @@ def create_report(pdf_filename="Case_Study_Report.pdf"):
     # Figure 4: Downloads vs Risk
     if os.path.exists('figures/eda_downloads_vs_risk.png'):
         story.append(Image('figures/eda_downloads_vs_risk.png', width=485, height=142))
-        story.append(Paragraph("<b>Figure 4:</b> Monthly Download Volume Distribution across Risk Classes and Breakdown across High-Impact (>10M) and Deprecated Packages.", table_body_style))
+        story.append(Paragraph("<b>Figure 4:</b> Monthly Download Volume Density (KDE) and The Vanity Paradox: Landmark Dormant Packages Retaining Millions of Downloads.", table_body_style))
         story.append(Spacer(1, 2))
     story.append(Paragraph(
         "<b>Business Interpretation (Downloads vs Risk: The Vanity Paradox):</b> "
@@ -418,11 +420,12 @@ def create_report(pdf_filename="Case_Study_Report.pdf"):
     # Figure 5: Dependents & Blast Radius
     if os.path.exists('figures/eda_dependents_vs_risk.png'):
         story.append(Image('figures/eda_dependents_vs_risk.png', width=485, height=142))
-        story.append(Paragraph("<b>Figure 5:</b> Downstream Dependents and Calculated Blast Radius Index (0–100 Scale) across Risk Classes.", table_body_style))
+        story.append(Paragraph("<b>Figure 5:</b> 2D Ecosystem Centrality (Downloads vs Dependents) and Downstream Blast Radius Exposure Tier Breakdown (%) across Risk Classes.", table_body_style))
         story.append(Spacer(1, 2))
     story.append(Paragraph(
         "<b>Business Interpretation (Downstream Blast Radius Exposure):</b> "
-        "Over 40% of Abandonment-Imminent packages possess High or Critical Blast Radius scores ($>40$). "
+        "Over 67% of Abandonment-Imminent packages possess High (50–64) or Critical (&ge; 65) Blast Radius scores. "
+        "As revealed in the 2D centrality plot, many abandoned packages occupy high-exposure ecosystem nodes (Downloads &ge; 10^5 and Dependents &ge; 10^2). "
         "When an abandoned library maintains high ecosystem centrality, the enterprise risk is catastrophic: "
         "any zero-day security flaw, runtime incompatibility, or malicious account takeover cascades silently into production without an upstream maintainer to publish a fix.",
         body_style
