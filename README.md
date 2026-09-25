@@ -139,7 +139,7 @@ The raw records were processed into `data/cleaned_dataset.csv` (443 valid record
 
 | Visualization | Analytical Business Interpretation |
 | :--- | :--- |
-| **Risk-Class Distribution**<br>![Risk Dist](figures/eda_risk_distribution.png) | **49.0% of packages (n=217) are Abandonment-Imminent**, 23.7% (n=105) are At-Risk, and only 27.3% (n=121) are Healthy. Both JavaScript and Python ecosystems show severe abandonment baselines (~49% each), proving that enterprise software relies on largely unmonitored infrastructure. |
+| **Risk-Class Distribution**<br>![Risk Dist](figures/eda_risk_distribution.png) | **49.7% of packages (n=220) are Abandonment-Imminent**, 19.4% (n=86) are At-Risk, and only 30.9% (n=137) are Healthy. Both JavaScript and Python ecosystems show severe abandonment baselines (~49.5% and ~45.6% respectively), proving that enterprise software relies on largely unmonitored infrastructure. |
 | **Inactivity & Cadence vs Risk**<br>![Inactivity](figures/eda_maintenance_inactivity.png) | Abandonment-Imminent packages exhibit a median inactivity duration exceeding 1,200 days (~3.3 years), with historical release cadences collapsing to $<1.5$ releases/year. In contrast, Healthy libraries maintain a median release cadence of 6.2 releases/year and have pushed updates within the last 60 days. |
 | **Contributor Concentration vs Risk**<br>![Contributor Concentration](figures/eda_contributor_concentration.png) | At-Risk and Abandonment-Imminent packages exhibit median Gini coefficients of **0.89 and 0.94** respectively. Once lead-contributor commit share crosses **80%**, the Issue Resolution Ratio plummets from 85% down below 40%. A single-maintainer bottleneck directly chokes issue triage, leading to maintainer burnout. |
 | **Downloads vs Risk (Vanity Paradox)**<br>![Downloads](figures/eda_downloads_vs_risk.png) | The download distributions of Abandonment-Imminent packages overlap heavily with Healthy packages (both averaging $10^6$ to $10^8$ monthly downloads). Abandoned libraries like *request* and *left-pad* continue to register millions of monthly downloads. Downloads represent **systemic exposure**, NOT maintainer health. |
@@ -161,28 +161,28 @@ To build a genuine **early-warning system**, input features were strictly restri
 
 ### 7.2 Decision Tree Tuning & Performance
 The dataset was split into **75% training (n=332)** and **25% holdout testing (n=111)** using stratified sampling. We tuned the tree via 5-fold cross-validation (`GridSearchCV`):
-* **Optimal Hyperparameters:** `criterion='entropy'`, `max_depth=4`, `min_samples_leaf=6`, `class_weight='balanced'`.
+* **Optimal Hyperparameters:** `criterion='entropy'`, `max_depth=3`, `min_samples_leaf=4`, `min_samples_split=5`, `class_weight=None`.
 
 ```text
 === HOLDOUT TEST SET PERFORMANCE (N=111) ===
-Overall Accuracy:   62.16%
-Macro Precision:    0.6152
-Macro Recall:       0.6406
-Macro F1-Score:     0.6167
-Weighted F1-Score:  0.6253
+Overall Accuracy:   70.27%
+Macro Precision:    0.7141
+Macro Recall:       0.6882
+Macro F1-Score:     0.6913
+Weighted F1-Score:  0.7065
 
 Classification Report:
                       precision    recall  f1-score   support
-Abandonment-Imminent     0.7750    0.5636    0.6526        55
-             At-Risk     0.5357    0.6818    0.6000        22
-             Healthy     0.5349    0.6765    0.5974        34
+Abandonment-Imminent     0.8125    0.7091    0.7573        55
+             At-Risk     0.7647    0.5909    0.6667        22
+             Healthy     0.5652    0.7647    0.6500        34
 ```
 
 | Confusion Matrix | Feature Importance |
 | :---: | :---: |
 | ![Confusion Matrix](figures/model_confusion_matrix.png) | ![Feature Importance](figures/model_feature_importance.png) |
 
-**Key Finding:** The primary non-leaking predictors of abandonment risk are **Annualized Release Cadence (28.7%)**, **Contributor Gini / Bus Factor Index (21.3%)**, **Open Issue Backlog (18.0%)**, and **Historical Release Count (14.3%)**.
+**Key Finding:** The primary non-leaking predictors of abandonment risk are **Historical Release Count (33.4%)**, **Open Issue Backlog (24.2%)**, **Contributor Gini / Bus Factor Index (23.5%)**, **Maintainers Count (10.7%)**, and **Annualized Release Cadence (8.3%)**.
 
 ---
 

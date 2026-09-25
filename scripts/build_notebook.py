@@ -396,22 +396,23 @@ print(f"Macro Precision:  {prec_macro:.4f}")
 print(f"Macro Recall:     {rec_macro:.4f}")
 print(f"Macro F1-Score:   {f1_macro:.4f}\\n")
 
+model_classes = list(best_model.classes_)
 print("Classification Report:")
-print(classification_report(y_test, y_pred, target_names=class_order))"""))
+print(classification_report(y_test, y_pred, labels=model_classes, target_names=model_classes))"""))
 
     cells.append(nbf.v4.new_code_cell("""# Confusion Matrix Plots
-cm = confusion_matrix(y_test, y_pred, labels=class_order)
+cm = confusion_matrix(y_test, y_pred, labels=model_classes)
 cm_norm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
 
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 4.8))
 
-sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=class_order, yticklabels=class_order,
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=model_classes, yticklabels=model_classes,
             cbar=False, ax=ax1, lw=0.8, linecolor='white')
 ax1.set_title("Test Confusion Matrix (Raw Counts)")
 ax1.set_ylabel("True Class")
 ax1.set_xlabel("Predicted Class")
 
-sns.heatmap(cm_norm, annot=True, fmt='.1%', cmap='Blues', xticklabels=class_order, yticklabels=class_order,
+sns.heatmap(cm_norm, annot=True, fmt='.1%', cmap='Blues', xticklabels=model_classes, yticklabels=model_classes,
             cbar=True, ax=ax2, lw=0.8, linecolor='white')
 ax2.set_title("Test Normalized Confusion Matrix (%)")
 ax2.set_ylabel("True Class")
@@ -440,10 +441,10 @@ plt.figure(figsize=(18, 9))
 plot_tree(
     best_model,
     feature_names=[c.replace('_', ' ').title() for c in feature_cols],
-    class_names=class_order,
+    class_names=model_classes,
     filled=True,
     rounded=True,
-    fontsize=9,
+    fontsize=10,
     precision=2
 )
 plt.title("Decision Tree Split Architecture (Depth = 3)", pad=20)

@@ -224,48 +224,49 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 
 dt_model = DecisionTreeClassifier(
-    max_depth=4,
-    min_samples_leaf=6,
-    min_samples_split=10,
+    max_depth=3,
+    min_samples_leaf=4,
+    min_samples_split=5,
     criterion='entropy',
-    class_weight='balanced',
+    class_weight=None,
     random_state=42
 )
 dt_model.fit(X_train, y_train)
 
 y_pred = dt_model.predict(X_test)
-report = classification_report(y_test, y_pred, target_names=CLASS_ORDER, output_dict=True)
+MODEL_CLASSES = list(dt_model.classes_) # ['Abandonment-Imminent', 'At-Risk', 'Healthy']
+report = classification_report(y_test, y_pred, labels=MODEL_CLASSES, target_names=MODEL_CLASSES, output_dict=True)
 
 # 7A. Decision Tree Plot
 plt.figure(figsize=(18, 9))
 plot_tree(
     dt_model,
     feature_names=[c.replace('_', ' ').title() for c in feature_cols],
-    class_names=CLASS_ORDER,
+    class_names=MODEL_CLASSES,
     filled=True,
     rounded=True,
-    fontsize=9,
+    fontsize=10,
     precision=2
 )
-plt.title("Decision Tree Architecture for Predicting Open-Source Abandonment Risk (Max Depth = 4)", pad=20)
+plt.title("Decision Tree Architecture for Predicting Open-Source Abandonment Risk (Depth = 3)", pad=20)
 plt.tight_layout()
 plt.savefig('figures/model_decision_tree.png', dpi=300)
 plt.close()
 print("Saved figures/model_decision_tree.png")
 
 # 7B. Confusion Matrix
-cm = confusion_matrix(y_test, y_pred, labels=CLASS_ORDER)
+cm = confusion_matrix(y_test, y_pred, labels=MODEL_CLASSES)
 cm_norm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
 
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 5))
 
-sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=CLASS_ORDER, yticklabels=CLASS_ORDER,
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=MODEL_CLASSES, yticklabels=MODEL_CLASSES,
             cbar=False, ax=ax1, linewidths=0.8, linecolor='white')
 ax1.set_title("Test Set Confusion Matrix (Raw Counts)", pad=15)
 ax1.set_ylabel("True Risk Class")
 ax1.set_xlabel("Predicted Risk Class")
 
-sns.heatmap(cm_norm, annot=True, fmt='.2%', cmap='Blues', xticklabels=CLASS_ORDER, yticklabels=CLASS_ORDER,
+sns.heatmap(cm_norm, annot=True, fmt='.2%', cmap='Blues', xticklabels=MODEL_CLASSES, yticklabels=MODEL_CLASSES,
             cbar=True, ax=ax2, linewidths=0.8, linecolor='white')
 ax2.set_title("Test Set Normalized Confusion Matrix (%)", pad=15)
 ax2.set_ylabel("True Risk Class")
